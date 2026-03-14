@@ -1,0 +1,147 @@
+.restaurants-container {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.restaurants-layout {
+  display: grid;
+  grid-template-columns: 1fr 400px;
+  gap: 2rem;
+  align-items: start;
+}
+
+.map-placeholder {
+  height: 600px;
+  background: #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  position: sticky;
+  top: 100px;
+}
+
+/* Simulating a map grid background */
+.map-placeholder::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-image: 
+    linear-gradient(rgba(100, 116, 139, 0.1) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(100, 116, 139, 0.1) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+.map-overlay {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  z-index: 10;
+  background: white;
+  padding: 2rem;
+  border-radius: var(--radius-md);
+  box-shadow: var(--glass-shadow);
+}
+
+.map-marker {
+  color: #ef4444;
+}
+
+.pulse-marker {
+  animation: pulse-marker 2s infinite ease-in-out;
+}
+
+@keyframes pulse-marker {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+
+.map-text {
+  font-weight: 500;
+  color: var(--color-text-muted);
+}
+
+.restaurants-list h2 {
+  font-size: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.places-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.place-card {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  transition: transform var(--transition-fast);
+}
+
+.place-card:hover {
+  transform: translateX(5px);
+  border-color: var(--color-primary-light);
+}
+
+.place-info h3 {
+  font-size: 1.25rem;
+  margin-bottom: 0.25rem;
+}
+
+.place-type {
+  color: var(--color-primary-dark);
+  font-size: 0.85rem;
+  font-weight: 600;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.place-details {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--color-text-main);
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+
+.star-icon {
+  color: #f59e0b;
+  fill: #f59e0b;
+}
+
+.place-address {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
+.place-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 0.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.place-actions .btn {
+  flex: 1;
+}
+
+@media (max-width: 1024px) {
+  .restaurants-layout {
+    grid-template-columns: 1fr;
+  }
+  
+  .map-placeholder {
+    height: 300px;
+    position: static;
+  }
+}
