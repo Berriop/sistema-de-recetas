@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Search, Clock, Users, Flame, Heart } from 'lucide-react';
+import { useNavigate } from "react-router-dom";
 import './Recipes.css';
 
 const MOCK_RECIPES = [
@@ -12,23 +13,30 @@ const MOCK_RECIPES = [
 ];
 
 const Recipes = () => {
-  const [searchTerm, setSearchTerm] = useState('');
 
-  const filtered = MOCK_RECIPES.filter(r => r.title.toLowerCase().includes(searchTerm.toLowerCase()));
+  const [searchTerm, setSearchTerm] = useState('');
+  const navigate = useNavigate();
+
+  const filtered = MOCK_RECIPES.filter(r =>
+    r.title.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <div className="recipes-container animate-fade-in">
+
       <header className="page-header">
         <div>
           <h1 className="page-title">Explorar Recetas</h1>
-          <p className="page-subtitle">Descubre cientos de platillos saludables para cada ocasión</p>
+          <p className="page-subtitle">
+            Descubre cientos de platillos saludables para cada ocasión
+          </p>
         </div>
-        
+
         <div className="search-bar big-search glass-panel">
           <Search size={20} className="search-icon" />
-          <input 
-            type="text" 
-            placeholder="Buscar recetas, ingredientes, dietas..." 
+          <input
+            type="text"
+            placeholder="Buscar recetas, ingredientes, dietas..."
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
           />
@@ -38,27 +46,38 @@ const Recipes = () => {
       <div className="recipes-grid">
         {filtered.map(recipe => (
           <div key={recipe.id} className="recipe-card glass-panel">
+
             <button className="like-btn">
               <Heart size={20} />
             </button>
+
             <div className="recipe-image-placeholder">
               <span>{recipe.image}</span>
               <span className="recipe-tag">{recipe.tag}</span>
             </div>
+
             <div className="recipe-content">
               <h3>{recipe.title}</h3>
+
               <div className="recipe-meta">
                 <span><Clock size={16} /> {recipe.time}</span>
                 <span><Flame size={16} /> {recipe.cals}</span>
                 <span><Users size={16} /> {recipe.servings} pers</span>
               </div>
-              <button className="btn btn-primary btn-full" style={{marginTop: '1rem'}}>
+
+              <button
+                className="btn btn-primary btn-full"
+                style={{ marginTop: '1rem' }}
+                onClick={() => navigate(`/recipes/${recipe.id}`)}
+              >
                 Ver Preparación
               </button>
+
             </div>
           </div>
         ))}
       </div>
+
     </div>
   );
 };
