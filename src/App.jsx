@@ -8,6 +8,7 @@ import Login from './pages/Login/Login';
 import Register from './pages/Register/Register';
 import Inventory from './pages/Inventory/Inventory';
 import Recipes from './pages/Recipes/Recipes';
+import RecipeDetail from "./pages/Recipes/RecipeDetail";
 import Recommendations from './pages/Recommendations/Recommendations';
 import Restaurants from './pages/Restaurants/Restaurants';
 
@@ -19,6 +20,7 @@ function App() {
           <Route index element={<Home />} />
           <Route path="inventory" element={<Inventory />} />
           <Route path="recipes" element={<Recipes />} />
+          <Route path="/recipes/:id" element={<RecipeDetail />} />
           <Route path="recommendations" element={<Recommendations />} />
           <Route path="restaurants" element={<Restaurants />} />
           <Route path="login" element={<Login />} />
