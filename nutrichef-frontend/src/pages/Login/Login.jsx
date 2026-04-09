@@ -16,7 +16,7 @@ const Login = () => {
       // Prototype Auth: we fetch all users and match credentials
       const users = await apiFetch('/users', { method: 'GET' });
       const user = (users || []).find(u => u.email === formData.email && u.password === formData.password);
-
+      
       if (user) {
         localStorage.setItem('userId', user.id);
         localStorage.setItem('userName', user.name);
@@ -46,11 +46,11 @@ const Login = () => {
             <label>Correo Electrónico</label>
             <div className="input-with-icon">
               <Mail size={18} className="input-icon" />
-              <input
-                type="email"
-                placeholder="tu@correo.com"
+              <input 
+                type="email" 
+                placeholder="tu@correo.com" 
                 value={formData.email}
-                onChange={e => setFormData({ ...formData, email: e.target.value })}
+                onChange={e => setFormData({...formData, email: e.target.value})}
                 required
               />
             </div>
@@ -60,11 +60,11 @@ const Login = () => {
             <label>Contraseña</label>
             <div className="input-with-icon">
               <Lock size={18} className="input-icon" />
-              <input
-                type="password"
-                placeholder="••••••••"
+              <input 
+                type="password" 
+                placeholder="••••••••" 
                 value={formData.password}
-                onChange={e => setFormData({ ...formData, password: e.target.value })}
+                onChange={e => setFormData({...formData, password: e.target.value})}
                 required
               />
             </div>
