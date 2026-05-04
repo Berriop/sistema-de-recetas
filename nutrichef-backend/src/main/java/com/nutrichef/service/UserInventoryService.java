@@ -61,4 +61,8 @@ public class UserInventoryService {
     public List<UserInventory> getUserInventory(Long userId) {
         return userInventoryRepository.findByUserId(userId);
     }
+
+    public void removeIngredientFromInventory(Long id) {
+        userInventoryRepository.deleteById(id);
+    }
 }

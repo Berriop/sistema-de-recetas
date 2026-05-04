@@ -35,4 +35,10 @@ public class UserInventoryController {
     public ResponseEntity<List<UserInventory>> getUserInventory(@PathVariable Long userId) {
         return new ResponseEntity<>(userInventoryService.getUserInventory(userId), HttpStatus.OK);
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> removeIngredientFromInventory(@PathVariable Long id) {
+        userInventoryService.removeIngredientFromInventory(id);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
 }

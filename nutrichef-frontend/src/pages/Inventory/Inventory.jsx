@@ -23,7 +23,7 @@ const Inventory = () => {
               id: inv.id, 
               name: inv.ingredient?.name || 'Desconocido', 
               category: inv.ingredient?.category || 'Otro', 
-              amount: inv.quantity + ' unidades' 
+              amount: `${inv.quantity} ${inv.unit || 'unidades'}` 
             }));
             setIngredients(mapped);
           }
@@ -56,13 +56,15 @@ const Inventory = () => {
       // 2. Link to user inventory
       const parsedQty = parseFloat(newItem.amount);
       const isQtyValid = !isNaN(parsedQty) && parsedQty > 0;
+      const unitStr = newItem.amount.replace(/[\d\.]/g, '').trim() || 'unidades';
       
       const invData = await apiFetch('/inventory', {
         method: 'POST',
         body: JSON.stringify({
           user: { id: parseInt(userId, 10) },
           ingredient: { id: ingResponse.id },
-          quantity: isQtyValid ? parsedQty : 1.0
+          quantity: isQtyValid ? parsedQty : 1.0,
+          unit: unitStr
         })
       });
 
@@ -71,7 +73,7 @@ const Inventory = () => {
           id: invData.id, 
           name: ingResponse.name, 
           category: ingResponse.category, 
-          amount: invData.quantity + ' unidades' 
+          amount: `${invData.quantity} ${invData.unit || 'unidades'}` 
         }]);
       }
       setNewItem({ name: '', amount: '', category: 'Vegetales' });
@@ -80,9 +82,13 @@ const Inventory = () => {
     }
   };
 
-  const handleRemove = (id) => {
-    // API deletion endpoint does not exist yet. Only masking locally.
-    setIngredients(ingredients.filter(item => item.id !== id));
+  const handleRemove = async (id) => {
+    try {
+      await apiFetch(`/inventory/${id}`, { method: 'DELETE' });
+      setIngredients(ingredients.filter(item => item.id !== id));
+    } catch (err) {
+      console.error('Error deleting inventory item', err);
+    }
   };
 
   const filteredIngredients = ingredients.filter(item => {
@@ -120,7 +126,7 @@ const Inventory = () => {
             />
              <input 
               type="text" 
-              placeholder="Cantidad (ej. 1 docena)" 
+              placeholder="Cantidad y unidad (ej. 100 g, 1 L, 2 unidades)" 
               value={newItem.amount}
               onChange={e => setNewItem({...newItem, amount: e.target.value})}
               className="form-input"

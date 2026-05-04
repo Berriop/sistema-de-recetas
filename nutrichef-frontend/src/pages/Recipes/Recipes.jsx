@@ -1,20 +1,64 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, Clock, Users, Flame, Heart } from 'lucide-react';
+import { apiFetch } from '../../services/api';
+import RecipeDetailModal from './RecipeDetailModal';
 import './Recipes.css';
-
-const MOCK_RECIPES = [
-  { id: 1, title: 'Bowl de Quinoa y Vegetales', time: '25 min', cals: '450 kcal', servings: 2, image: '🥗', tag: 'Vegano' },
-  { id: 2, title: 'Salmón al Horno con Espárragos', time: '30 min', cals: '520 kcal', servings: 2, image: '🐟', tag: 'Keto' },
-  { id: 3, title: 'Tacos de Pollo Saludables', time: '20 min', cals: '380 kcal', servings: 3, image: '🌮', tag: 'Alto en Proteína' },
-  { id: 4, title: 'Smoothie Verde Antioxidante', time: '10 min', cals: '210 kcal', servings: 1, image: '🍹', tag: 'Detox' },
-  { id: 5, title: 'Pasta Integral al Pesto', time: '35 min', cals: '480 kcal', servings: 4, image: '🍝', tag: 'Vegetariano' },
-  { id: 6, title: 'Wrap de Pavo y Aguacate', time: '15 min', cals: '350 kcal', servings: 1, image: '🌯', tag: 'Bajo en Carb' },
-];
 
 const Recipes = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [recipes, setRecipes] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedRecipe, setSelectedRecipe] = useState(null);
+  const [userInventory, setUserInventory] = useState([]);
+  const [favorites, setFavorites] = useState(new Set());
 
-  const filtered = MOCK_RECIPES.filter(r => r.title.toLowerCase().includes(searchTerm.toLowerCase()));
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const userId = localStorage.getItem('userId') || 1;
+        const [recipesData, inventoryData, favoritesData] = await Promise.all([
+          apiFetch('/api/recipes'),
+          apiFetch(`/inventory/${userId}`).catch(() => []),
+          apiFetch(`/api/favorites/${userId}`).catch(() => [])
+        ]);
+        setRecipes(recipesData || []);
+        setUserInventory(inventoryData || []);
+        if (favoritesData) {
+          setFavorites(new Set(favoritesData.map(f => f.id)));
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  const toggleFavorite = async (recipeId, e) => {
+    e.stopPropagation();
+    const userId = localStorage.getItem('userId') || 1;
+    const isFavorite = favorites.has(recipeId);
+    
+    try {
+      if (isFavorite) {
+        await apiFetch(`/api/favorites/${userId}/${recipeId}`, { method: 'DELETE' });
+        setFavorites(prev => {
+          const next = new Set(prev);
+          next.delete(recipeId);
+          return next;
+        });
+      } else {
+        await apiFetch(`/api/favorites/${userId}/${recipeId}`, { method: 'POST' });
+        setFavorites(prev => new Set(prev).add(recipeId));
+      }
+    } catch (err) {
+      console.error("Error toggling favorite", err);
+    }
+  };
+
+  const filtered = recipes.filter(r => r.name.toLowerCase().includes(searchTerm.toLowerCase()));
 
   return (
     <div className="recipes-container animate-fade-in">
@@ -35,30 +79,43 @@ const Recipes = () => {
         </div>
       </header>
 
-      <div className="recipes-grid">
-        {filtered.map(recipe => (
-          <div key={recipe.id} className="recipe-card glass-panel">
-            <button className="like-btn">
-              <Heart size={20} />
-            </button>
-            <div className="recipe-image-placeholder">
-              <span>{recipe.image}</span>
-              <span className="recipe-tag">{recipe.tag}</span>
-            </div>
-            <div className="recipe-content">
-              <h3>{recipe.title}</h3>
-              <div className="recipe-meta">
-                <span><Clock size={16} /> {recipe.time}</span>
-                <span><Flame size={16} /> {recipe.cals}</span>
-                <span><Users size={16} /> {recipe.servings} pers</span>
-              </div>
-              <button className="btn btn-primary btn-full" style={{marginTop: '1rem'}}>
-                Ver Preparación
+      {loading ? (
+        <div className="loading-state">
+          <div className="spin-loader"></div>
+          <p>Cargando recetas deliciosas...</p>
+        </div>
+      ) : (
+        <div className="recipes-grid">
+          {filtered.map(recipe => (
+            <div key={recipe.id} className="recipe-card glass-panel" onClick={() => setSelectedRecipe(recipe)}>
+              <button className={`like-btn ${favorites.has(recipe.id) ? 'active' : ''}`} onClick={(e) => toggleFavorite(recipe.id, e)}>
+                <Heart size={20} fill={favorites.has(recipe.id) ? "currentColor" : "none"} />
               </button>
+              <div className="recipe-image-placeholder" style={{ backgroundImage: `url(${recipe.imageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
+              </div>
+              <div className="recipe-content">
+                <h3>{recipe.name}</h3>
+                <p className="recipe-desc-short">{recipe.description.substring(0, 60)}...</p>
+                <div className="recipe-meta">
+                  <span><Flame size={16} /> {recipe.calories} kcal</span>
+                  <span><Users size={16} /> 1 pers</span>
+                </div>
+                <button className="btn btn-primary btn-full" style={{marginTop: '1rem'}} onClick={(e) => { e.stopPropagation(); setSelectedRecipe(recipe); }}>
+                  Ver Preparación
+                </button>
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
+
+      {selectedRecipe && (
+        <RecipeDetailModal 
+          recipe={selectedRecipe} 
+          onClose={() => setSelectedRecipe(null)} 
+          userInventory={userInventory} 
+        />
+      )}
     </div>
   );
 };

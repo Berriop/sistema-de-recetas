@@ -1,4 +1,9 @@
 com\nutrichef\controller\UserController.class
+com\nutrichef\model\UserInventory.class
+com\nutrichef\model\User.class
+com\nutrichef\model\Ingredient.class
+com\nutrichef\service\UserInventoryService.class
+com\nutrichef\service\IngredientService.class
 com\nutrichef\repository\IngredientRepository.class
 com\nutrichef\config\CorsConfig.class
 com\nutrichef\controller\UserInventoryController.class
@@ -6,10 +11,5 @@ com\nutrichef\repository\UserInventoryRepository.class
 com\nutrichef\exception\GlobalExceptionHandler.class
 com\nutrichef\controller\IngredientController.class
 com\nutrichef\repository\UserRepository.class
-com\nutrichef\model\UserInventory.class
-com\nutrichef\model\User.class
-com\nutrichef\model\Ingredient.class
-com\nutrichef\service\UserInventoryService.class
 com\nutrichef\NutrichefApplication.class
-com\nutrichef\service\IngredientService.class
 com\nutrichef\service\UserService.class
