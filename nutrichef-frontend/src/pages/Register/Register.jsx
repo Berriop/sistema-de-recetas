@@ -1,16 +1,30 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { UserPlus, Mail, Lock, User } from 'lucide-react';
+import { apiFetch } from '../../services/api';
 import '../Login/Auth.css'; // Reuse auth styles
 
 const Register = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({ name: '', email: '', password: '' });
+  const [error, setError] = useState(null);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Simulate registration
-    navigate('/inventory');
+    try {
+      setError(null);
+      const data = await apiFetch('/users/register', {
+        method: 'POST',
+        body: JSON.stringify(formData)
+      });
+      if (data && data.id) {
+         localStorage.setItem('userId', data.id);
+         localStorage.setItem('userName', data.name);
+      }
+      window.location.href = '/inventory';
+    } catch (err) {
+      setError(err.message || 'Error al registrar usuario');
+    }
   };
 
   return (
@@ -20,6 +34,8 @@ const Register = () => {
           <h2>Crea tu cuenta</h2>
           <p>Únete a NutriChef y mejora tu alimentación</p>
         </div>
+
+        {error && <div style={{ color: '#ff4d4f', background: '#ffe5e5', padding: '10px', borderRadius: '4px', marginBottom: '15px', textAlign: 'center', fontSize: '0.9rem' }}>{error}</div>}
 
         <form className="auth-form" onSubmit={handleSubmit}>
           <div className="form-group">

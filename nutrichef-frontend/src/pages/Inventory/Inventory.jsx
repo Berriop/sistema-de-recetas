@@ -1,33 +1,87 @@
 import React, { useState } from 'react';
 import { Plus, Trash2, Search, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { apiFetch } from '../../services/api';
 import './Inventory.css';
 
 const MOCK_CATEGORIES = ['Todos', 'Vegetales', 'Proteínas', 'Lácteos', 'Carbohidratos', 'Especias'];
 
 const Inventory = () => {
-  const [ingredients, setIngredients] = useState([
-    { id: 1, name: 'Tomate', category: 'Vegetales', amount: '3 unidades' },
-    { id: 2, name: 'Pechuga de Pollo', category: 'Proteínas', amount: '500g' },
-    { id: 3, name: 'Arroz Integral', category: 'Carbohidratos', amount: '1kg' },
-  ]);
-  
+  const [ingredients, setIngredients] = useState([]);
   const [newItem, setNewItem] = useState({ name: '', amount: '', category: 'Vegetales' });
   const [activeCategory, setActiveCategory] = useState('Todos');
   const [searchQuery, setSearchQuery] = useState('');
+  
+  const userId = localStorage.getItem('userId');
 
-  const handleAdd = (e) => {
+  React.useEffect(() => {
+    if (userId) {
+      apiFetch(`/inventory/${userId}`, { method: 'GET' })
+        .then(data => {
+          if (Array.isArray(data)) {
+            const mapped = data.map(inv => ({ 
+              id: inv.id, 
+              name: inv.ingredient?.name || 'Desconocido', 
+              category: inv.ingredient?.category || 'Otro', 
+              amount: inv.quantity + ' unidades' 
+            }));
+            setIngredients(mapped);
+          }
+        })
+        .catch(err => console.error("Error loading inventory", err));
+    }
+  }, [userId]);
+
+  const handleAdd = async (e) => {
     e.preventDefault();
-    if (!newItem.name.trim()) return;
+    if (!newItem.name.trim() || !userId) return;
     
-    setIngredients([
-      ...ingredients,
-      { id: Date.now(), ...newItem }
-    ]);
-    setNewItem({ name: '', amount: '', category: 'Vegetales' });
+    try {
+      // 1. Create or Find Ingredient
+      let ingResponse = await apiFetch('/ingredients', { 
+        method: 'POST', 
+        body: JSON.stringify({ name: newItem.name, category: newItem.category }) 
+      }).catch(() => null);
+      
+      if (!ingResponse || ingResponse.error) {
+        const allIngs = await apiFetch('/ingredients', { method: 'GET' });
+        ingResponse = (allIngs || []).find(i => i.name.toLowerCase() === newItem.name.toLowerCase());
+      }
+      
+      if (!ingResponse || !ingResponse.id) {
+         console.error("Could not fetch or create ingredient");
+         return;
+      }
+
+      // 2. Link to user inventory
+      const parsedQty = parseFloat(newItem.amount);
+      const isQtyValid = !isNaN(parsedQty) && parsedQty > 0;
+      
+      const invData = await apiFetch('/inventory', {
+        method: 'POST',
+        body: JSON.stringify({
+          user: { id: parseInt(userId, 10) },
+          ingredient: { id: ingResponse.id },
+          quantity: isQtyValid ? parsedQty : 1.0
+        })
+      });
+
+      if (invData) {
+        setIngredients([...ingredients, { 
+          id: invData.id, 
+          name: ingResponse.name, 
+          category: ingResponse.category, 
+          amount: invData.quantity + ' unidades' 
+        }]);
+      }
+      setNewItem({ name: '', amount: '', category: 'Vegetales' });
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const handleRemove = (id) => {
+    // API deletion endpoint does not exist yet. Only masking locally.
     setIngredients(ingredients.filter(item => item.id !== id));
   };
 

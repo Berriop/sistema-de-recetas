@@ -1,9 +1,17 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { ChefHat, Home, BookOpen, User, Navigation, Search } from 'lucide-react';
+import { ChefHat, Home, BookOpen, User, Navigation, Search, LogOut } from 'lucide-react';
 import './NavBar.css';
 
 const NavBar = () => {
+  const userId = localStorage.getItem('userId');
+  const userName = localStorage.getItem('userName');
+
+  const handleLogout = () => {
+    localStorage.removeItem('userId');
+    localStorage.removeItem('userName');
+    window.location.href = '/login';
+  };
   return (
     <header className="navbar glass-panel">
       <div className="navbar-container">
@@ -34,13 +42,30 @@ const NavBar = () => {
         </nav>
 
         <div className="navbar-actions">
-          <NavLink to="/login" className="btn btn-outline">
-            Iniciar Sesión
-          </NavLink>
-          <NavLink to="/register" className="btn btn-primary">
-            <User size={18} />
-            <span>Registrarse</span>
-          </NavLink>
+          {userId ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+              <span style={{ fontWeight: '500', color: 'var(--color-text)' }}>
+                Hola, {userName || 'Usuario'}
+              </span>
+              <button 
+                onClick={handleLogout} 
+                className="btn btn-outline" 
+                style={{ padding: '0.4rem 0.8rem', display: 'flex', alignItems: 'center', gap: '5px' }}
+              >
+                <LogOut size={16} /> Salir
+              </button>
+            </div>
+          ) : (
+            <>
+              <NavLink to="/login" className="btn btn-outline">
+                Iniciar Sesión
+              </NavLink>
+              <NavLink to="/register" className="btn btn-primary">
+                <User size={18} />
+                <span>Registrarse</span>
+              </NavLink>
+            </>
+          )}
         </div>
       </div>
     </header>

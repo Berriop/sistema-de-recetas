@@ -1,0 +1,15 @@
+C:\Users\juanp\OneDrive\Escritorio\sistema-de-recetas\nutrichef-backend\src\main\java\com\nutrichef\service\UserService.java
+C:\Users\juanp\OneDrive\Escritorio\sistema-de-recetas\nutrichef-backend\src\main\java\com\nutrichef\model\Ingredient.java
+C:\Users\juanp\OneDrive\Escritorio\sistema-de-recetas\nutrichef-backend\src\main\java\com\nutrichef\repository\UserRepository.java
+C:\Users\juanp\OneDrive\Escritorio\sistema-de-recetas\nutrichef-backend\src\main\java\com\nutrichef\controller\UserInventoryController.java
+C:\Users\juanp\OneDrive\Escritorio\sistema-de-recetas\nutrichef-backend\src\main\java\com\nutrichef\exception\GlobalExceptionHandler.java
+C:\Users\juanp\OneDrive\Escritorio\sistema-de-recetas\nutrichef-backend\src\main\java\com\nutrichef\config\CorsConfig.java
+C:\Users\juanp\OneDrive\Escritorio\sistema-de-recetas\nutrichef-backend\src\main\java\com\nutrichef\controller\IngredientController.java
+C:\Users\juanp\OneDrive\Escritorio\sistema-de-recetas\nutrichef-backend\src\main\java\com\nutrichef\repository\IngredientRepository.java
+C:\Users\juanp\OneDrive\Escritorio\sistema-de-recetas\nutrichef-backend\src\main\java\com\nutrichef\service\IngredientService.java
+C:\Users\juanp\OneDrive\Escritorio\sistema-de-recetas\nutrichef-backend\src\main\java\com\nutrichef\model\UserInventory.java
+C:\Users\juanp\OneDrive\Escritorio\sistema-de-recetas\nutrichef-backend\src\main\java\com\nutrichef\NutrichefApplication.java
+C:\Users\juanp\OneDrive\Escritorio\sistema-de-recetas\nutrichef-backend\src\main\java\com\nutrichef\controller\UserController.java
+C:\Users\juanp\OneDrive\Escritorio\sistema-de-recetas\nutrichef-backend\src\main\java\com\nutrichef\model\User.java
+C:\Users\juanp\OneDrive\Escritorio\sistema-de-recetas\nutrichef-backend\src\main\java\com\nutrichef\repository\UserInventoryRepository.java
+C:\Users\juanp\OneDrive\Escritorio\sistema-de-recetas\nutrichef-backend\src\main\java\com\nutrichef\service\UserInventoryService.java
