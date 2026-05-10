@@ -110,3 +110,27 @@
 .auth-footer a:hover {
   text-decoration: underline;
 }
+
+/* ── Errores ── */
+.auth-error {
+  color: #c0392b;
+  background: #fde8e6;
+  border: 1px solid #e74c3c;
+  padding: 10px 14px;
+  border-radius: 8px;
+  margin-bottom: 14px;
+  font-size: 0.875rem;
+  text-align: center;
+}
+
+.field-error {
+  display: block;
+  color: #c0392b;
+  font-size: 0.78rem;
+  margin-top: 4px;
+  padding-left: 2px;
+}
+
+.input-error {
+  border-color: #e74c3c !important;
+}

@@ -1,24 +1,66 @@
-import React, { useState } from 'react';
-import { Search, Clock, Users, Flame, Heart } from 'lucide-react';
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from 'react';
+import { Search, Flame, Heart, AlertCircle } from 'lucide-react';
+import { apiFetch } from '../../services/api';
+import RecipeDetailModal from './RecipeDetailModal';
 import './Recipes.css';
 
-const MOCK_RECIPES = [
-  { id: 1, title: 'Bowl de Quinoa y Vegetales', time: '25 min', cals: '450 kcal', servings: 2, image: '🥗', tag: 'Vegano' },
-  { id: 2, title: 'Salmón al Horno con Espárragos', time: '30 min', cals: '520 kcal', servings: 2, image: '🐟', tag: 'Keto' },
-  { id: 3, title: 'Tacos de Pollo Saludables', time: '20 min', cals: '380 kcal', servings: 3, image: '🌮', tag: 'Alto en Proteína' },
-  { id: 4, title: 'Smoothie Verde Antioxidante', time: '10 min', cals: '210 kcal', servings: 1, image: '🍹', tag: 'Detox' },
-  { id: 5, title: 'Pasta Integral al Pesto', time: '35 min', cals: '480 kcal', servings: 4, image: '🍝', tag: 'Vegetariano' },
-  { id: 6, title: 'Wrap de Pavo y Aguacate', time: '15 min', cals: '350 kcal', servings: 1, image: '🌯', tag: 'Bajo en Carb' },
-];
-
 const Recipes = () => {
-
   const [searchTerm, setSearchTerm] = useState('');
-  const navigate = useNavigate();
+  const [recipes, setRecipes] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [selectedRecipe, setSelectedRecipe] = useState(null);
+  const [userInventory, setUserInventory] = useState([]);
+  const [favorites, setFavorites] = useState(new Set());
 
-  const filtered = MOCK_RECIPES.filter(r =>
-    r.title.toLowerCase().includes(searchTerm.toLowerCase())
+  const userId = localStorage.getItem('userId');
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const [recipesData, inventoryData, favoritesData] = await Promise.all([
+          apiFetch('/api/recipes'),
+          userId ? apiFetch(`/inventory/${userId}`).catch(() => []) : [],
+          userId ? apiFetch(`/api/favorites/${userId}`).catch(() => []) : [],
+        ]);
+        setRecipes(recipesData || []);
+        setUserInventory(inventoryData || []);
+        if (Array.isArray(favoritesData)) {
+          setFavorites(new Set(favoritesData.map(f => f.id)));
+        }
+      } catch (err) {
+        setError(err.message || 'Error cargando recetas');
+        console.error('Error fetching recipes:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [userId]);
+
+  const toggleFavorite = async (recipeId, e) => {
+    e.stopPropagation();
+    if (!userId) return;
+    const isFav = favorites.has(recipeId);
+    try {
+      await apiFetch(`/api/favorites/${userId}/${recipeId}`, {
+        method: isFav ? 'DELETE' : 'POST',
+      });
+      setFavorites(prev => {
+        const next = new Set(prev);
+        isFav ? next.delete(recipeId) : next.add(recipeId);
+        return next;
+      });
+    } catch (err) {
+      console.error('Error toggling favorite:', err);
+    }
+  };
+
+  const filtered = recipes.filter(r =>
+    r.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (r.description || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -27,57 +69,100 @@ const Recipes = () => {
       <header className="page-header">
         <div>
           <h1 className="page-title">Explorar Recetas</h1>
-          <p className="page-subtitle">
-            Descubre cientos de platillos saludables para cada ocasión
-          </p>
+          <p className="page-subtitle">Descubre platillos saludables para cada ocasión</p>
         </div>
-
         <div className="search-bar big-search glass-panel">
           <Search size={20} className="search-icon" />
           <input
             type="text"
-            placeholder="Buscar recetas, ingredientes, dietas..."
+            placeholder="Buscar recetas o ingredientes…"
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
           />
         </div>
       </header>
 
-      <div className="recipes-grid">
-        {filtered.map(recipe => (
-          <div key={recipe.id} className="recipe-card glass-panel">
+      {loading && (
+        <div className="loading-state">
+          <div className="spin-loader"></div>
+          <p>Cargando recetas…</p>
+        </div>
+      )}
 
-            <button className="like-btn">
-              <Heart size={20} />
-            </button>
+      {error && (
+        <div className="empty-state">
+          <AlertCircle size={32} /> <p>Error: {error}</p>
+        </div>
+      )}
 
-            <div className="recipe-image-placeholder">
-              <span>{recipe.image}</span>
-              <span className="recipe-tag">{recipe.tag}</span>
-            </div>
-
-            <div className="recipe-content">
-              <h3>{recipe.title}</h3>
-
-              <div className="recipe-meta">
-                <span><Clock size={16} /> {recipe.time}</span>
-                <span><Flame size={16} /> {recipe.cals}</span>
-                <span><Users size={16} /> {recipe.servings} pers</span>
-              </div>
-
-              <button
-                className="btn btn-primary btn-full"
-                style={{ marginTop: '1rem' }}
-                onClick={() => navigate(`/recipes/${recipe.id}`)}
+      {!loading && !error && (
+        <>
+          <p className="results-count">{filtered.length} receta{filtered.length !== 1 ? 's' : ''} encontrada{filtered.length !== 1 ? 's' : ''}</p>
+          <div className="recipes-grid">
+            {filtered.map(recipe => (
+              <div
+                key={recipe.id}
+                className="recipe-card glass-panel"
+                onClick={() => setSelectedRecipe(recipe)}
               >
-                Ver Preparación
-              </button>
+                <button
+                  type="button"
+                  className={`like-btn ${favorites.has(recipe.id) ? 'active' : ''}`}
+                  onClick={(e) => toggleFavorite(recipe.id, e)}
+                  title={favorites.has(recipe.id) ? 'Quitar de favoritos' : 'Agregar a favoritos'}
+                >
+                  <Heart size={20} fill={favorites.has(recipe.id) ? 'currentColor' : 'none'} />
+                </button>
 
-            </div>
+                <div
+                  className="recipe-image-placeholder"
+                  style={{
+                    backgroundImage: `url(${recipe.imageUrl})`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                  }}
+                />
+
+                <div className="recipe-content">
+                  <h3>{recipe.name}</h3>
+                  <p className="recipe-desc-short">
+                    {(recipe.description || '').substring(0, 70)}…
+                  </p>
+                  <div className="recipe-meta">
+                    <span><Flame size={16} /> {recipe.calories} kcal</span>
+                    <span>P: {recipe.protein}g · C: {recipe.carbs}g · G: {recipe.fats}g</span>
+                  </div>
+                  <button
+                    type="button"
+                    className="btn btn-primary btn-full"
+                    style={{ marginTop: '1rem' }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedRecipe(recipe);
+                    }}
+                  >
+                    Ver Preparación
+                  </button>
+                </div>
+              </div>
+            ))}
+
+            {filtered.length === 0 && (
+              <div className="empty-state">
+                No encontramos recetas para &quot;{searchTerm}&quot; 🍽️
+              </div>
+            )}
           </div>
-        ))}
-      </div>
+        </>
+      )}
 
+      {selectedRecipe && (
+        <RecipeDetailModal
+          recipe={selectedRecipe}
+          onClose={() => setSelectedRecipe(null)}
+          userInventory={userInventory}
+        />
+      )}
     </div>
   );
 };
