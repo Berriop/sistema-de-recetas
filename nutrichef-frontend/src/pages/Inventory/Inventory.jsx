@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, Search, ArrowRight, AlertCircle } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Plus, Trash2, Search, ArrowRight, AlertCircle, ChevronDown } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { apiFetch } from '../../services/api';
 import './Inventory.css';
@@ -18,7 +18,136 @@ const ALLOWED_UNITS = [
 const CATEGORIES = ['Todos', 'Proteína', 'Carbohidrato', 'Vegetal', 'Lácteo',
                     'Lácteo/Vegano', 'Grasa', 'Fruta', 'Otro'];
 
+/** Lista predeterminada de ingredientes comunes */
+const PRESET_INGREDIENTS = [
+  // Proteínas
+  { name: 'Pechuga de pollo',   category: 'Proteína' },
+  { name: 'Muslo de pollo',     category: 'Proteína' },
+  { name: 'Carne molida',       category: 'Proteína' },
+  { name: 'Lomo de res',        category: 'Proteína' },
+  { name: 'Filete de tilapia',  category: 'Proteína' },
+  { name: 'Atún en lata',       category: 'Proteína' },
+  { name: 'Salmón',             category: 'Proteína' },
+  { name: 'Huevo',              category: 'Proteína' },
+  { name: 'Frijoles negros',    category: 'Proteína' },
+  { name: 'Lentejas',           category: 'Proteína' },
+  { name: 'Garbanzo',           category: 'Proteína' },
+  { name: 'Tofu',               category: 'Proteína' },
+  // Carbohidratos
+  { name: 'Arroz',              category: 'Carbohidrato' },
+  { name: 'Pasta',              category: 'Carbohidrato' },
+  { name: 'Pan integral',       category: 'Carbohidrato' },
+  { name: 'Avena',              category: 'Carbohidrato' },
+  { name: 'Papa',               category: 'Carbohidrato' },
+  { name: 'Yuca',               category: 'Carbohidrato' },
+  { name: 'Plátano maduro',     category: 'Carbohidrato' },
+  { name: 'Quinoa',             category: 'Carbohidrato' },
+  // Vegetales
+  { name: 'Tomate',             category: 'Vegetal' },
+  { name: 'Cebolla',            category: 'Vegetal' },
+  { name: 'Ajo',                category: 'Vegetal' },
+  { name: 'Zanahoria',          category: 'Vegetal' },
+  { name: 'Espinaca',           category: 'Vegetal' },
+  { name: 'Lechuga',            category: 'Vegetal' },
+  { name: 'Brócoli',            category: 'Vegetal' },
+  { name: 'Pimentón rojo',      category: 'Vegetal' },
+  { name: 'Pimentón verde',     category: 'Vegetal' },
+  { name: 'Apio',               category: 'Vegetal' },
+  { name: 'Pepino',             category: 'Vegetal' },
+  { name: 'Calabacín',          category: 'Vegetal' },
+  { name: 'Cebolla larga',      category: 'Vegetal' },
+  { name: 'Cilantro',           category: 'Vegetal' },
+  // Lácteos
+  { name: 'Leche',              category: 'Lácteo' },
+  { name: 'Queso blanco',       category: 'Lácteo' },
+  { name: 'Yogurt griego',      category: 'Lácteo' },
+  { name: 'Crema de leche',     category: 'Lácteo' },
+  { name: 'Mantequilla',        category: 'Lácteo' },
+  { name: 'Leche de almendras', category: 'Lácteo/Vegano' },
+  { name: 'Leche de coco',      category: 'Lácteo/Vegano' },
+  // Grasas
+  { name: 'Aceite de oliva',    category: 'Grasa' },
+  { name: 'Aceite de girasol',  category: 'Grasa' },
+  { name: 'Aguacate',           category: 'Grasa' },
+  { name: 'Maní',               category: 'Grasa' },
+  // Frutas
+  { name: 'Banana',             category: 'Fruta' },
+  { name: 'Manzana',            category: 'Fruta' },
+  { name: 'Naranja',            category: 'Fruta' },
+  { name: 'Fresa',              category: 'Fruta' },
+  { name: 'Mango',              category: 'Fruta' },
+  { name: 'Piña',               category: 'Fruta' },
+  { name: 'Papaya',             category: 'Fruta' },
+  { name: 'Limón',              category: 'Fruta' },
+];
+
 const EMPTY_FORM = { name: '', quantity: '', unit: 'unidades', category: 'Vegetal' };
+
+// ── Componente de selección de ingrediente con búsqueda ──────────────────────
+const IngredientSelector = ({ value, onChange }) => {
+  const [query, setQuery]   = useState(value);
+  const [open, setOpen]     = useState(false);
+  const ref                 = useRef(null);
+
+  const filtered = PRESET_INGREDIENTS.filter(i =>
+    i.name.toLowerCase().includes(query.toLowerCase())
+  );
+
+  // Cerrar al click fuera
+  useEffect(() => {
+    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const select = (ingredient) => {
+    setQuery(ingredient.name);
+    setOpen(false);
+    onChange(ingredient);
+  };
+
+  return (
+    <div className="ingredient-selector" ref={ref}>
+      <div className="ingredient-selector__input-wrap">
+        <Search size={16} className="ingredient-selector__icon" />
+        <input
+          type="text"
+          className="form-input ingredient-selector__input"
+          placeholder="Buscar ingrediente…"
+          value={query}
+          onChange={e => { setQuery(e.target.value); setOpen(true); onChange({ name: e.target.value, category: null }); }}
+          onFocus={() => setOpen(true)}
+          autoComplete="off"
+        />
+        <ChevronDown size={16} className={`ingredient-selector__chevron ${open ? 'open' : ''}`} onClick={() => setOpen(o => !o)} />
+      </div>
+
+      {open && (
+        <div className="ingredient-selector__dropdown">
+          {filtered.length === 0 ? (
+            <div className="ingredient-selector__empty">
+              <span>"{query}" — se creará como nuevo ingrediente</span>
+            </div>
+          ) : (
+            filtered.map(ing => (
+              <button
+                key={ing.name}
+                type="button"
+                className="ingredient-selector__option"
+                onClick={() => select(ing)}
+              >
+                <span className="ingredient-selector__name">{ing.name}</span>
+                <span className="ingredient-selector__cat">{ing.category}</span>
+              </button>
+            ))
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+
 
 const Inventory = () => {
   const [ingredients, setIngredients] = useState([]);
@@ -159,14 +288,14 @@ const Inventory = () => {
           )}
 
           <form className="add-form" onSubmit={handleAdd}>
-            {/* Nombre */}
-            <input
-              type="text"
-              placeholder="Nombre (ej. Huevo)"
+            {/* Nombre — selector con lista predeterminada */}
+            <IngredientSelector
               value={form.name}
-              onChange={e => setForm({ ...form, name: e.target.value })}
-              className="form-input"
-              required
+              onChange={ing => setForm(prev => ({
+                ...prev,
+                name: ing.name,
+                category: ing.category || prev.category,
+              }))}
             />
 
             {/* Cantidad numérica */}
