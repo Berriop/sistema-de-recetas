@@ -192,6 +192,69 @@
   flex: 1;
 }
 
+/* ── Buscador de Lugares ── */
+.places-search-bar {
+  margin-top: 1.5rem;
+  width: 100%;
+  max-width: 600px;
+}
+
+.search-input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1.25rem;
+  background: white;
+  border-radius: 50px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  border: 1px solid var(--color-border);
+  transition: all var(--transition-fast);
+}
+
+.search-input-wrapper:focus-within {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-light);
+}
+
+.search-icon {
+  color: var(--color-text-muted);
+}
+
+.places-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 1rem;
+  font-family: inherit;
+  color: var(--color-text-main);
+  outline: none;
+}
+
+.places-input::placeholder {
+  color: #9ca3af;
+}
+
+/* Sugerencias de Autocomplete de Google Maps */
+.pac-container {
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  font-family: var(--font-family);
+  margin-top: 0.5rem;
+}
+.pac-item {
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  font-size: 0.95rem;
+}
+.pac-item:hover {
+  background-color: var(--color-background);
+}
+.pac-item-query {
+  color: var(--color-text-main);
+  font-weight: 600;
+}
+
 @media (max-width: 1024px) {
   .restaurants-layout {
     grid-template-columns: 1fr;
