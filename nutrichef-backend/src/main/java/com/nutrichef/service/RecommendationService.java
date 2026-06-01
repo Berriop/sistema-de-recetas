@@ -9,27 +9,28 @@ import com.nutrichef.repository.RecipeRepository;
 import com.nutrichef.repository.UserInventoryRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
 public class RecommendationService {
 
-    @Autowired
-    private UserInventoryRepository userInventoryRepository;
+    @Autowired private UserInventoryRepository userInventoryRepository;
+    @Autowired private RecipeRepository recipeRepository;
+    @Autowired private RecipeService recipeService;
 
-    @Autowired
-    private RecipeRepository recipeRepository;
-
-    @Autowired
-    private RecipeService recipeService;
-
+    /**
+     * Calcula recomendaciones por PRESENCIA de ingredientes (no compara cantidades).
+     * El score = ingredientes_match / total_ingredientes_receta × 100.
+     * Mejora futura: comparar también las cantidades disponibles vs requeridas.
+     */
+    @Transactional(readOnly = true)
     public List<RecommendationDTO> getRecommendationsForUser(Long userId) {
         List<UserInventory> userInventory = userInventoryRepository.findByUserId(userId);
+
+        // Solo IDs de ingredientes que el usuario tiene
         Set<Long> userIngredientIds = userInventory.stream()
                 .map(ui -> ui.getIngredient().getId())
                 .collect(Collectors.toSet());
@@ -39,32 +40,27 @@ public class RecommendationService {
 
         for (Recipe recipe : allRecipes) {
             List<RecipeIngredient> recipeIngredients = recipe.getRecipeIngredients();
-            if (recipeIngredients == null || recipeIngredients.isEmpty()) {
-                continue; // Skip recipes with no ingredients
-            }
+            if (recipeIngredients == null || recipeIngredients.isEmpty()) continue;
 
-            int matchCount = 0;
-            for (RecipeIngredient ri : recipeIngredients) {
-                if (userIngredientIds.contains(ri.getIngredient().getId())) {
-                    matchCount++;
-                }
-            }
+            long matchCount = recipeIngredients.stream()
+                    .filter(ri -> userIngredientIds.contains(ri.getIngredient().getId()))
+                    .count();
 
-            double matchPercentage = (double) matchCount / recipeIngredients.size() * 100.0;
+            double matchPct = (double) matchCount / recipeIngredients.size() * 100.0;
 
             RecipeDTO recipeDTO = recipeService.convertToDTO(recipe);
-            RecommendationDTO recDTO = new RecommendationDTO(
+            recommendations.add(new RecommendationDTO(
                     recipeDTO,
-                    matchPercentage,
-                    matchCount,
+                    matchPct,
+                    (int) matchCount,
                     recipeIngredients.size()
-            );
-
-            recommendations.add(recDTO);
+            ));
         }
 
-        // Sort by match percentage descending
-        recommendations.sort(Comparator.comparing(RecommendationDTO::getMatchPercentage).reversed());
+        // Mayor coincidencia primero; si hay empate, menos ingredientes faltantes primero
+        recommendations.sort(Comparator
+                .comparingDouble(RecommendationDTO::getMatchPercentage).reversed()
+                .thenComparingInt(r -> r.getTotalIngredientsCount() - r.getMatchedIngredientsCount()));
 
         return recommendations;
     }

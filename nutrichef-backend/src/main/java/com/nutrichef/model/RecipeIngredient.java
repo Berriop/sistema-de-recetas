@@ -19,6 +19,7 @@ public class RecipeIngredient {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "recipe_id", nullable = false)
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private Recipe recipe;
 
     @ManyToOne(fetch = FetchType.EAGER)

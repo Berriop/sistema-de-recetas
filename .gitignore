@@ -1,4 +1,6 @@
-# Logs
+# =========================
+# LOGS
+# =========================
 logs
 *.log
 npm-debug.log*
@@ -7,16 +9,41 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# =========================
+# FRONTEND
+# =========================
 node_modules
 dist
 dist-ssr
 *.local
 
-# Editor directories and files
+# =========================
+# BACKEND (Java / Maven)
+# =========================
+target/
+*.class
+
+# Maven
+.mvn/
+!wrapper/maven-wrapper.jar
+
+# =========================
+# IDEs
+# =========================
 .vscode/*
 !.vscode/extensions.json
 .idea
+*.iml
+
+# =========================
+# OS
+# =========================
 .DS_Store
+Thumbs.db
+
+# =========================
+# Otros
+# =========================
 *.suo
 *.ntvs*
 *.njsproj

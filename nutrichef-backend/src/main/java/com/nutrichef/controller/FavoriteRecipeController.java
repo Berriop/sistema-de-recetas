@@ -11,6 +11,7 @@ import com.nutrichef.service.RecipeService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -33,6 +34,7 @@ public class FavoriteRecipeController {
     @Autowired
     private RecipeService recipeService;
 
+    @Transactional(readOnly = true)
     @GetMapping("/{userId}")
     public ResponseEntity<List<RecipeDTO>> getFavorites(@PathVariable Long userId) {
         List<FavoriteRecipe> favorites = favoriteRecipeRepository.findByUserId(userId);

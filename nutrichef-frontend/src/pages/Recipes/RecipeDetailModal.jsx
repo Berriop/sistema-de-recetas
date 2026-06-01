@@ -1,28 +1,29 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { X, CheckCircle, AlertCircle, RefreshCw } from 'lucide-react';
 import { apiFetch } from '../../services/api';
 import './RecipeDetailModal.css';
 
-const RecipeDetailModal = ({ recipe, onClose, userInventory }) => {
+const RecipeDetailModal = ({ recipe, onClose, userInventory = [] }) => {
   const [substitutions, setSubstitutions] = useState({});
-  const [loadingSubs, setLoadingSubs] = useState({});
+  const [loadingSubs, setLoadingSubs]     = useState({});
 
   if (!recipe) return null;
 
-  const inventoryIds = userInventory ? userInventory.map(item => item.ingredient.id) : [];
+  // IDs de ingredientes que el usuario TIENE
+  const inventoryIds = userInventory
+    .map(item => item.ingredient?.id)
+    .filter(Boolean);
 
   const handleGetSubstitution = async (ingredientId) => {
     setLoadingSubs(prev => ({ ...prev, [ingredientId]: true }));
     try {
       const data = await apiFetch(`/api/substitutions/${ingredientId}`);
-      if (data && data.length > 0) {
-        setSubstitutions(prev => ({ ...prev, [ingredientId]: data[0].substituteIngredient.name }));
-      } else {
-        setSubstitutions(prev => ({ ...prev, [ingredientId]: 'No hay sustituto disponible' }));
-      }
-    } catch (err) {
-      console.error(err);
-      setSubstitutions(prev => ({ ...prev, [ingredientId]: 'Error al buscar' }));
+      const result = data?.length > 0
+        ? data[0].substituteIngredient?.name || 'Sin nombre'
+        : 'No hay sustituto disponible';
+      setSubstitutions(prev => ({ ...prev, [ingredientId]: result }));
+    } catch {
+      setSubstitutions(prev => ({ ...prev, [ingredientId]: 'Error al buscar sustituto' }));
     } finally {
       setLoadingSubs(prev => ({ ...prev, [ingredientId]: false }));
     }
@@ -32,7 +33,8 @@ const RecipeDetailModal = ({ recipe, onClose, userInventory }) => {
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content recipe-modal glass-panel" onClick={e => e.stopPropagation()}>
         <button className="modal-close" onClick={onClose}><X size={24} /></button>
-        
+
+        {/* Imagen de cabecera */}
         <div className="modal-header-image" style={{ backgroundImage: `url(${recipe.imageUrl})` }}>
           <div className="modal-header-overlay">
             <h2>{recipe.name}</h2>
@@ -41,7 +43,8 @@ const RecipeDetailModal = ({ recipe, onClose, userInventory }) => {
 
         <div className="modal-body">
           <p className="recipe-description">{recipe.description}</p>
-          
+
+          {/* Info nutricional */}
           <div className="nutritional-info">
             <div className="nutrition-item"><span>Calorías</span><strong>{recipe.calories} kcal</strong></div>
             <div className="nutrition-item"><span>Proteínas</span><strong>{recipe.protein}g</strong></div>
@@ -49,31 +52,40 @@ const RecipeDetailModal = ({ recipe, onClose, userInventory }) => {
             <div className="nutrition-item"><span>Grasas</span><strong>{recipe.fats}g</strong></div>
           </div>
 
+          {/* Ingredientes */}
           <div className="ingredients-section">
             <h3>Ingredientes Necesarios</h3>
             <ul className="ingredients-list">
-              {recipe.ingredients.map(ri => {
-                const hasIngredient = inventoryIds.includes(ri.ingredient.id);
+              {(recipe.ingredients || []).map(ri => {
+                const hasIt = inventoryIds.includes(ri.ingredient?.id);
+                const ingId = ri.ingredient?.id;
+
                 return (
-                  <li key={ri.id} className={`ingredient-item ${hasIngredient ? 'has-it' : 'missing'}`}>
+                  <li key={ri.id} className={`ingredient-item ${hasIt ? 'has-it' : 'missing'}`}>
                     <div className="ingredient-main">
-                      {hasIngredient ? <CheckCircle size={20} className="text-success" /> : <AlertCircle size={20} className="text-danger" />}
-                      <span className="ingredient-name">{ri.quantity} {ri.unit} de {ri.ingredient.name}</span>
+                      {hasIt
+                        ? <CheckCircle size={20} className="text-success" />
+                        : <AlertCircle size={20} className="text-danger" />}
+                      <span className="ingredient-name">
+                        {ri.quantity} {ri.unit} de {ri.ingredient?.name || '?'}
+                      </span>
                     </div>
-                    
-                    {!hasIngredient && (
+
+                    {!hasIt && ingId && (
                       <div className="substitution-box">
-                        {!substitutions[ri.ingredient.id] ? (
-                          <button 
+                        {!substitutions[ingId] ? (
+                          <button
                             className="btn-substitute"
-                            onClick={() => handleGetSubstitution(ri.ingredient.id)}
-                            disabled={loadingSubs[ri.ingredient.id]}
+                            onClick={() => handleGetSubstitution(ingId)}
+                            disabled={loadingSubs[ingId]}
                           >
-                            {loadingSubs[ri.ingredient.id] ? <RefreshCw size={14} className="spin" /> : 'Sugerir sustituto'}
+                            {loadingSubs[ingId]
+                              ? <><RefreshCw size={14} className="spin" /> Buscando…</>
+                              : 'Sugerir sustituto'}
                           </button>
                         ) : (
                           <span className="substitution-result">
-                            Sustituto: <strong>{substitutions[ri.ingredient.id]}</strong>
+                            Sustituto: <strong>{substitutions[ingId]}</strong>
                           </span>
                         )}
                       </div>

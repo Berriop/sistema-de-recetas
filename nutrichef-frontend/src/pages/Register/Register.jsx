@@ -1,31 +1,80 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { UserPlus, Mail, Lock, User } from 'lucide-react';
 import { apiFetch } from '../../services/api';
-import '../Login/Auth.css'; // Reuse auth styles
+import '../Login/Auth.css';
 
 const Register = () => {
-  const navigate = useNavigate();
-  const [formData, setFormData] = useState({ name: '', email: '', password: '' });
-  const [error, setError] = useState(null);
+  const [formData, setFormData]       = useState({ name: '', email: '', password: '', confirm: '' });
+  const [error, setError]             = useState(null);
+  const [fieldErrors, setFieldErrors] = useState({});
+  const [loading, setLoading]         = useState(false);
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+    if (fieldErrors[e.target.name]) {
+      setFieldErrors({ ...fieldErrors, [e.target.name]: null });
+    }
+    if (error) setError(null);
+  };
+
+  const validate = () => {
+    const errs = {};
+    if (!formData.name.trim())           errs.name     = 'El nombre es requerido';
+    if (!formData.email.trim())          errs.email    = 'El email es requerido';
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email))
+                                         errs.email    = 'Email inválido';
+    if (!formData.password)              errs.password = 'La contraseña es requerida';
+    else if (formData.password.length < 6) errs.password = 'Mínimo 6 caracteres';
+    if (formData.password !== formData.confirm) errs.confirm = 'Las contraseñas no coinciden';
+    return errs;
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const errs = validate();
+    if (Object.keys(errs).length > 0) { setFieldErrors(errs); return; }
+
+    setLoading(true);
+    setError(null);
     try {
-      setError(null);
       const data = await apiFetch('/users/register', {
         method: 'POST',
-        body: JSON.stringify(formData)
+        body: JSON.stringify({
+          name:     formData.name.trim(),
+          email:    formData.email.trim().toLowerCase(),
+          password: formData.password,
+        }),
       });
-      if (data && data.id) {
-         localStorage.setItem('userId', data.id);
-         localStorage.setItem('userName', data.name);
-      }
+      localStorage.setItem('userId',   data.id);
+      localStorage.setItem('userName', data.name);
       window.location.href = '/inventory';
     } catch (err) {
       setError(err.message || 'Error al registrar usuario');
+    } finally {
+      setLoading(false);
     }
   };
+
+  const Field = ({ id, label, type = 'text', placeholder, icon: Icon }) => (
+    <div className="form-group">
+      <label htmlFor={id}>{label}</label>
+      <div className="input-with-icon">
+        <Icon size={18} className="input-icon" />
+        <input
+          id={id}
+          name={id}
+          type={type}
+          placeholder={placeholder}
+          value={formData[id]}
+          onChange={handleChange}
+          autoComplete={type === 'password' ? 'new-password' : id}
+          className={fieldErrors[id] ? 'input-error' : ''}
+        />
+      </div>
+      {fieldErrors[id] && <span className="field-error">{fieldErrors[id]}</span>}
+    </div>
+  );
 
   return (
     <div className="auth-container animate-fade-in">
@@ -35,54 +84,17 @@ const Register = () => {
           <p>Únete a NutriChef y mejora tu alimentación</p>
         </div>
 
-        {error && <div style={{ color: '#ff4d4f', background: '#ffe5e5', padding: '10px', borderRadius: '4px', marginBottom: '15px', textAlign: 'center', fontSize: '0.9rem' }}>{error}</div>}
+        {error && <div className="auth-error">{error}</div>}
 
-        <form className="auth-form" onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label>Nombre Completo</label>
-            <div className="input-with-icon">
-              <User size={18} className="input-icon" />
-              <input 
-                type="text" 
-                placeholder="Juan Pérez" 
-                value={formData.name}
-                onChange={e => setFormData({...formData, name: e.target.value})}
-                required
-              />
-            </div>
-          </div>
+        <form className="auth-form" onSubmit={handleSubmit} noValidate>
+          <Field id="name"     label="Nombre Completo"     placeholder="Juan Pérez"   icon={User} />
+          <Field id="email"    label="Correo Electrónico"  placeholder="tu@correo.com" icon={Mail} type="email" />
+          <Field id="password" label="Contraseña"          placeholder="Mínimo 6 caracteres" icon={Lock} type="password" />
+          <Field id="confirm"  label="Confirmar Contraseña" placeholder="Repite tu contraseña" icon={Lock} type="password" />
 
-          <div className="form-group">
-            <label>Correo Electrónico</label>
-            <div className="input-with-icon">
-              <Mail size={18} className="input-icon" />
-              <input 
-                type="email" 
-                placeholder="tu@correo.com" 
-                value={formData.email}
-                onChange={e => setFormData({...formData, email: e.target.value})}
-                required
-              />
-            </div>
-          </div>
-
-          <div className="form-group">
-            <label>Contraseña</label>
-            <div className="input-with-icon">
-              <Lock size={18} className="input-icon" />
-              <input 
-                type="password" 
-                placeholder="••••••••" 
-                value={formData.password}
-                onChange={e => setFormData({...formData, password: e.target.value})}
-                required
-                minLength={6}
-              />
-            </div>
-          </div>
-
-          <button type="submit" className="btn btn-primary btn-full">
-            <UserPlus size={18} /> Registrarse
+          <button type="submit" className="btn btn-primary btn-full" disabled={loading}>
+            <UserPlus size={18} />
+            {loading ? 'Registrando...' : 'Registrarse'}
           </button>
         </form>
 

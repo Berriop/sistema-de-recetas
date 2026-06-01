@@ -1,30 +1,35 @@
 const API_BASE_URL = 'http://localhost:8081';
 
+/**
+ * Wrapper de fetch centralizado.
+ * Lanza un Error con el mensaje del backend si la respuesta no es 2xx.
+ */
 export const apiFetch = async (endpoint, options = {}) => {
-  const token = localStorage.getItem('token');
   const headers = {
     'Content-Type': 'application/json',
-    ...(token && { Authorization: `Bearer ${token}` }),
     ...options.headers,
   };
 
-  const config = {
-    ...options,
-    headers,
-  };
+  const config = { ...options, headers };
 
+  const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
+
+  // Intentar parsear siempre como JSON
+  let data = null;
   try {
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
-    const data = await response.json().catch(() => null);
-
-    if (!response.ok) {
-      // Return a standard error message
-      throw new Error(data?.message || data || 'Error en la petición');
-    }
-
-    return data;
-  } catch (error) {
-    console.error('API Error:', error);
-    throw error;
+    data = await response.json();
+  } catch (_) {
+    data = null;
   }
+
+  if (!response.ok) {
+    // El backend devuelve { error: "..." } o strings planos
+    const msg =
+      (data && (data.error || data.message)) ||
+      (typeof data === 'string' ? data : null) ||
+      `Error ${response.status}`;
+    throw new Error(msg);
+  }
+
+  return data;
 };

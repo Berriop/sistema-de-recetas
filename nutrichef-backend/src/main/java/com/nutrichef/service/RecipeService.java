@@ -7,6 +7,7 @@ import com.nutrichef.model.Recipe;
 import com.nutrichef.repository.RecipeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -17,18 +18,21 @@ public class RecipeService {
     @Autowired
     private RecipeRepository recipeRepository;
 
+    @Transactional(readOnly = true)
     public List<RecipeDTO> getAllRecipes() {
         return recipeRepository.findAll().stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public RecipeDTO getRecipeById(Long id) {
         Recipe recipe = recipeRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Recipe not found"));
         return convertToDTO(recipe);
     }
 
+    @Transactional
     public RecipeDTO createRecipe(Recipe recipe) {
         Recipe savedRecipe = recipeRepository.save(recipe);
         return convertToDTO(savedRecipe);

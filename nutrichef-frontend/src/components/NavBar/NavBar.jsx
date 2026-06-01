@@ -1,10 +1,10 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { ChefHat, Home, BookOpen, User, Navigation, Search, LogOut } from 'lucide-react';
+import { ChefHat, Home, BookOpen, User, Navigation, Search, LogOut, Sparkles } from 'lucide-react';
 import './NavBar.css';
 
 const NavBar = () => {
-  const userId = localStorage.getItem('userId');
+  const userId   = localStorage.getItem('userId');
   const userName = localStorage.getItem('userName');
 
   const handleLogout = () => {
@@ -12,6 +12,17 @@ const NavBar = () => {
     localStorage.removeItem('userName');
     window.location.href = '/login';
   };
+
+  const navLink = (to, Icon, label) => (
+    <NavLink
+      to={to}
+      className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}
+    >
+      <Icon size={20} />
+      <span>{label}</span>
+    </NavLink>
+  );
+
   return (
     <header className="navbar glass-panel">
       <div className="navbar-container">
@@ -23,33 +34,22 @@ const NavBar = () => {
         </NavLink>
 
         <nav className="navbar-links">
-          <NavLink to="/" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
-            <Home size={20} />
-            <span>Inicio</span>
-          </NavLink>
-          <NavLink to="/inventory" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
-            <Search size={20} />
-            <span>Inventario</span>
-          </NavLink>
-          <NavLink to="/recipes" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
-            <BookOpen size={20} />
-            <span>Recetas</span>
-          </NavLink>
-          <NavLink to="/restaurants" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
-            <Navigation size={20} />
-            <span>Lugares</span>
-          </NavLink>
+          {navLink('/',               Home,      'Inicio')}
+          {navLink('/inventory',      Search,    'Inventario')}
+          {navLink('/recipes',        BookOpen,  'Recetas')}
+          {navLink('/recommendations',Sparkles,  'Para Ti')}
+          {navLink('/restaurants',    Navigation,'Lugares')}
         </nav>
 
         <div className="navbar-actions">
           {userId ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
               <span style={{ fontWeight: '500', color: 'var(--color-text)' }}>
                 Hola, {userName || 'Usuario'}
               </span>
-              <button 
-                onClick={handleLogout} 
-                className="btn btn-outline" 
+              <button
+                onClick={handleLogout}
+                className="btn btn-outline"
                 style={{ padding: '0.4rem 0.8rem', display: 'flex', alignItems: 'center', gap: '5px' }}
               >
                 <LogOut size={16} /> Salir
@@ -57,12 +57,9 @@ const NavBar = () => {
             </div>
           ) : (
             <>
-              <NavLink to="/login" className="btn btn-outline">
-                Iniciar Sesión
-              </NavLink>
+              <NavLink to="/login"    className="btn btn-outline">Iniciar Sesión</NavLink>
               <NavLink to="/register" className="btn btn-primary">
-                <User size={18} />
-                <span>Registrarse</span>
+                <User size={18} /><span>Registrarse</span>
               </NavLink>
             </>
           )}

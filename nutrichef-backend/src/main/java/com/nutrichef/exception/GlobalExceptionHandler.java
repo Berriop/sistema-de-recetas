@@ -13,19 +13,33 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    /** Errores de validación Bean Validation (@NotBlank, @Email, @Min…) */
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Map<String, String>> handleValidationExceptions(MethodArgumentNotValidException ex) {
-        Map<String, String> errors = new HashMap<>();
-        ex.getBindingResult().getAllErrors().forEach((error) -> {
-            String fieldName = ((FieldError) error).getField();
-            String errorMessage = error.getDefaultMessage();
-            errors.put(fieldName, errorMessage);
+    public ResponseEntity<Map<String, Object>> handleValidationExceptions(
+            MethodArgumentNotValidException ex) {
+        Map<String, String> fieldErrors = new HashMap<>();
+        ex.getBindingResult().getAllErrors().forEach(error -> {
+            String field = ((FieldError) error).getField();
+            fieldErrors.put(field, error.getDefaultMessage());
         });
-        return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
+        Map<String, Object> body = Map.of(
+                "error", "Error de validación",
+                "detalles", fieldErrors
+        );
+        return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
     }
-    
+
+    /** IllegalArgumentException lanzada desde los servicios */
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<Map<String, String>> handleIllegalArgument(IllegalArgumentException ex) {
+        return ResponseEntity.badRequest()
+                .body(Map.of("error", ex.getMessage()));
+    }
+
+    /** Cualquier otro error no controlado */
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<String> handleGeneralExceptions(Exception ex) {
-        return new ResponseEntity<>(ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+    public ResponseEntity<Map<String, String>> handleGeneralExceptions(Exception ex) {
+        return ResponseEntity.internalServerError()
+                .body(Map.of("error", "Error interno del servidor: " + ex.getMessage()));
     }
 }

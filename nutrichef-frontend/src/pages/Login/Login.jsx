@@ -1,33 +1,52 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { LogIn, Mail, Lock } from 'lucide-react';
 import { apiFetch } from '../../services/api';
 import './Auth.css';
 
 const Login = () => {
-  const navigate = useNavigate();
   const [formData, setFormData] = useState({ email: '', password: '' });
-  const [error, setError] = useState(null);
+  const [error, setError]       = useState(null);
+  const [loading, setLoading]   = useState(false);
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+    if (error) setError(null);
+  };
+
+  const validate = () => {
+    if (!formData.email.trim()) return 'El email es requerido';
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email))
+      return 'Ingresa un email válido';
+    if (!formData.password) return 'La contraseña es requerida';
+    if (formData.password.length < 6) return 'La contraseña debe tener al menos 6 caracteres';
+    return null;
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const validationError = validate();
+    if (validationError) { setError(validationError); return; }
+
+    setLoading(true);
+    setError(null);
     try {
-      setError(null);
-      // Prototype Auth: we fetch all users and match credentials
-      const users = await apiFetch('/users', { method: 'GET' });
-      const user = (users || []).find(u => u.email === formData.email && u.password === formData.password);
-      
-      if (user) {
-        localStorage.setItem('userId', user.id);
-        localStorage.setItem('userName', user.name);
-        // Force fully reload or event dispatch if we want navbar to catch it instantly, but navigate works if NavBar re-renders
-        // A simple window.location.href forces react application to remount with new localStorage state
-        window.location.href = '/inventory';
-      } else {
-        setError('Credenciales incorrectas');
-      }
+      // POST /users/login — el backend compara credenciales y devuelve el usuario
+      const user = await apiFetch('/users/login', {
+        method: 'POST',
+        body: JSON.stringify({
+          email: formData.email.trim().toLowerCase(),
+          password: formData.password,
+        }),
+      });
+
+      localStorage.setItem('userId',   user.id);
+      localStorage.setItem('userName', user.name);
+      window.location.href = '/inventory';
     } catch (err) {
-      setError(err.message || 'Error al iniciar sesión');
+      setError(err.message || 'Credenciales incorrectas');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -39,40 +58,48 @@ const Login = () => {
           <p>Ingresa a tu cuenta para continuar</p>
         </div>
 
-        {error && <div style={{ color: '#ff4d4f', background: '#ffe5e5', padding: '10px', borderRadius: '4px', marginBottom: '15px', textAlign: 'center', fontSize: '0.9rem' }}>{error}</div>}
+        {error && (
+          <div className="auth-error">{error}</div>
+        )}
 
-        <form className="auth-form" onSubmit={handleSubmit}>
+        <form className="auth-form" onSubmit={handleSubmit} noValidate>
           <div className="form-group">
-            <label>Correo Electrónico</label>
+            <label htmlFor="email">Correo Electrónico</label>
             <div className="input-with-icon">
               <Mail size={18} className="input-icon" />
-              <input 
-                type="email" 
-                placeholder="tu@correo.com" 
+              <input
+                id="email"
+                name="email"
+                type="email"
+                placeholder="tu@correo.com"
                 value={formData.email}
-                onChange={e => setFormData({...formData, email: e.target.value})}
+                onChange={handleChange}
+                autoComplete="email"
                 required
               />
             </div>
           </div>
 
           <div className="form-group">
-            <label>Contraseña</label>
+            <label htmlFor="password">Contraseña</label>
             <div className="input-with-icon">
               <Lock size={18} className="input-icon" />
-              <input 
-                type="password" 
-                placeholder="••••••••" 
+              <input
+                id="password"
+                name="password"
+                type="password"
+                placeholder="••••••••"
                 value={formData.password}
-                onChange={e => setFormData({...formData, password: e.target.value})}
+                onChange={handleChange}
+                autoComplete="current-password"
                 required
               />
             </div>
-            <a href="#" className="forgot-password">¿Olvidaste tu contraseña?</a>
           </div>
 
-          <button type="submit" className="btn btn-primary btn-full">
-            <LogIn size={18} /> Iniciar Sesión
+          <button type="submit" className="btn btn-primary btn-full" disabled={loading}>
+            <LogIn size={18} />
+            {loading ? 'Ingresando...' : 'Iniciar Sesión'}
           </button>
         </form>
 
