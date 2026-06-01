@@ -46,10 +46,4 @@ public class UserInventoryController {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<?> removeIngredientFromInventory(@PathVariable Long id) {
-        userInventoryService.removeIngredientFromInventory(id);
-        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-    }
 }
