@@ -5,7 +5,7 @@ import './Restaurants.css';
 // ─── Clave de Google Maps ────────────────────────────────────────────────────
 // IMPORTANTE: reemplaza esta clave con tu API Key de Google Maps.
 // La clave necesita los servicios: Maps JavaScript API + Places API.
-const GOOGLE_MAPS_API_KEY = 'AIzaSyAGTzYT3mVtPCjRoOdkKqNeahU2ihpMMI4';
+const GOOGLE_MAPS_API_KEY = 'SECRET_GOOGLE_MAPS_API_KEY';
 
 // Categorías que se buscan en Google Places
 const SEARCH_QUERY = 'restaurante saludable';
